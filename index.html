@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -336,27 +337,27 @@
         </div>
     </div>
 </div>
-    <!-- ส่วนสถิติ -->
-  <div id="statsTab" class="hidden container mx-auto p-4 md:p-6">
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-6 text-red-700">📊 สถิติการจัดการเรื่องร้องเรียน</h2>
-    <div class="ios-card grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-lg">
-      <div><div class="font-semibold text-gray-600">ทั้งหมด</div><div id="statTotal" class="text-2xl font-bold text-blue-800">-</div></div>
-      <div><div class="font-semibold text-gray-600">ดำเนินการแล้ว</div><div id="statDone" class="text-2xl font-bold text-green-600">-</div></div>
-      <div><div class="font-semibold text-gray-600">อยู่ระหว่างดำเนินการ</div><div id="statPending" class="text-2xl font-bold text-yellow-500">-</div></div>
-    </div>
-    <div class="ios-card">
-      <h3 class="text-lg font-semibold mb-2">กราฟภาพรวมรายเดือน</h3>
-      <canvas id="monthlyChart" height="300"></canvas>
-    </div>
-    <div class="ios-card">
-      <h3 class="text-lg font-semibold mb-2">กราฟแยกตามตำบล</h3>
-      <canvas id="districtChart" height="300"></canvas>
-    </div>
-    <div class="ios-card">
-      <h3 class="text-lg font-semibold mb-2">กราฟแยกตามฝ่ายงานรับผิดชอบ</h3>
-      <canvas id="departmentChart" height="300"></canvas>
-    </div>
+  <!-- ส่วนสถิติ -->
+<div id="statsTab" class="hidden container mx-auto p-4 md:p-6">
+  <h2 class="text-2xl md:text-3xl font-bold text-center mb-6 text-red-700">📊 สถิติการจัดการเรื่องร้องเรียน</h2>
+  <div class="ios-card grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-lg">
+    <div><div class="font-semibold text-gray-600">ทั้งหมด</div><div id="statTotal" class="text-2xl font-bold text-blue-800">-</div></div>
+    <div><div class="font-semibold text-gray-600">ดำเนินการแล้ว</div><div id="statDone" class="text-2xl font-bold text-green-600">-</div></div>
+    <div><div class="font-semibold text-gray-600">อยู่ระหว่างดำเนินการ</div><div id="statPending" class="text-2xl font-bold text-yellow-500">-</div></div>
   </div>
+  <div class="ios-card">
+    <h3 class="text-lg font-semibold mb-2">กราฟภาพรวมรายเดือน</h3>
+    <canvas id="monthlyChart" height="300"></canvas>
+  </div>
+  <div class="ios-card">
+    <h3 class="text-lg font-semibold mb-2">กราฟแยกตามตำบล</h3>
+    <canvas id="districtChart" height="300"></canvas>
+  </div>
+  <div class="ios-card">
+    <h3 class="text-lg font-semibold mb-2">กราฟแยกตามฝ่ายงานรับผิดชอบ</h3>
+    <canvas id="departmentChart" height="300"></canvas>
+  </div>
+</div>
     <footer>
         ©2025 ระบบจัดการเรื่องร้องเรียน กองช่างสุขาภิบาล โดย นายธีรศักดิ์ พูลเขาล้าน
     </footer>
@@ -690,68 +691,68 @@
         // Initial load of complaints
         document.addEventListener('DOMContentLoaded', loadComplaints);
 function switchTab(tabId) {
-      document.getElementById('formSection').classList.add('hidden');
-      document.getElementById('statsTab').classList.add('hidden');
-      document.getElementById(tabId).classList.remove('hidden');
-      if (tabId === 'statsTab') loadStatistics();
+  document.getElementById('formSection').classList.add('hidden');
+  document.getElementById('statsTab').classList.add('hidden');
+  document.getElementById(tabId).classList.remove('hidden');
+  if (tabId === 'statsTab') loadStatistics();
+}
+
+function loadStatistics() {
+  const callback = 'statsCallback_' + Date.now();
+  window[callback] = function(response) {
+    if (!response.success) {
+      Swal.fire("ผิดพลาด", response.message || "ไม่สามารถโหลดข้อมูลสถิติได้", "error");
+      return;
     }
+    const { summary, monthlyStats, byDistrict, byDepartment } = response;
+    document.getElementById("statTotal").textContent = summary.total;
+    document.getElementById("statDone").textContent = summary.done;
+    document.getElementById("statPending").textContent = summary.pending;
 
-    function loadStatistics() {
-      const callback = 'statsCallback_' + Date.now();
-      window[callback] = function(response) {
-        if (!response.success) {
-          Swal.fire("ผิดพลาด", response.message || "ไม่สามารถโหลดข้อมูลสถิติได้", "error");
-          return;
-        }
-        const { summary, monthlyStats, byDistrict, byDepartment } = response;
-        document.getElementById("statTotal").textContent = summary.total;
-        document.getElementById("statDone").textContent = summary.done;
-        document.getElementById("statPending").textContent = summary.pending;
+    new Chart(document.getElementById("monthlyChart"), {
+      type: 'bar',
+      data: {
+        labels: monthlyStats.map(m => m.label),
+        datasets: [
+          { label: "ดำเนินการแล้ว", backgroundColor: "#16a34a", data: monthlyStats.map(m => m.done) },
+          { label: "อยู่ระหว่างดำเนินการ", backgroundColor: "#facc15", data: monthlyStats.map(m => m.pending) }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'top' } } }
+    });
 
-        new Chart(document.getElementById("monthlyChart"), {
-          type: 'bar',
-          data: {
-            labels: monthlyStats.map(m => m.label),
-            datasets: [
-              { label: "ดำเนินการแล้ว", backgroundColor: "#16a34a", data: monthlyStats.map(m => m.done) },
-              { label: "อยู่ระหว่างดำเนินการ", backgroundColor: "#facc15", data: monthlyStats.map(m => m.pending) }
-            ]
-          },
-          options: { responsive: true, plugins: { legend: { position: 'top' } } }
-        });
+    new Chart(document.getElementById("districtChart"), {
+      type: 'pie',
+      data: {
+        labels: Object.keys(byDistrict),
+        datasets: [{
+          label: "จำนวนเรื่อง",
+          backgroundColor: Object.keys(byDistrict).map((_, i) => `hsl(${i * 50}, 70%, 60%)`),
+          data: Object.values(byDistrict),
+        }]
+      },
+      options: { responsive: true }
+    });
 
-        new Chart(document.getElementById("districtChart"), {
-          type: 'pie',
-          data: {
-            labels: Object.keys(byDistrict),
-            datasets: [{
-              label: "จำนวนเรื่อง",
-              backgroundColor: Object.keys(byDistrict).map((_, i) => `hsl(${i * 50}, 70%, 60%)`),
-              data: Object.values(byDistrict),
-            }]
-          },
-          options: { responsive: true }
-        });
+    new Chart(document.getElementById("departmentChart"), {
+      type: 'pie',
+      data: {
+        labels: Object.keys(byDepartment),
+        datasets: [{
+          label: "จำนวนเรื่อง",
+          backgroundColor: Object.keys(byDepartment).map((_, i) => `hsl(${i * 60}, 60%, 65%)`),
+          data: Object.values(byDepartment),
+        }]
+      },
+      options: { responsive: true }
+    });
 
-        new Chart(document.getElementById("departmentChart"), {
-          type: 'pie',
-          data: {
-            labels: Object.keys(byDepartment),
-            datasets: [{
-              label: "จำนวนเรื่อง",
-              backgroundColor: Object.keys(byDepartment).map((_, i) => `hsl(${i * 60}, 60%, 65%)`),
-              data: Object.values(byDepartment),
-            }]
-          },
-          options: { responsive: true }
-        });
+    delete window[callback];
+  };
 
-        delete window[callback];
-      };
-      const script = document.createElement("script");
-      script.src = `https://script.google.com/macros/s/AKfycbzhvSkxzJDDYeFdnhiGGS-PpXI9KzrT_wzssuWwgcGNDDwXAAdxhUGCT6tlRdAzCX3Dfw/exec?action=getStatistics&callback=${callback}`;
-      document.head.appendChild(script);
-    }
+  const script = document.createElement("script");
+  script.src = `https://script.google.com/macros/s/AKfycbzhvSkxzJDDYeFdnhiGGS-PpXI9KzrT_wzssuWwgcGNDDwXAAdxhUGCT6tlRdAzCX3Dfw/exec?action=getStatistics&callback=${callback}`;
+  document.head.appendChild(script);
     </script>
 </body>
 </html>
