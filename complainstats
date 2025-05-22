@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการเรื่องร้องเรียน กองช่างสุขาภิบาล</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f0f2f5; /* iOS-like light grey background */
+            color: #333;
+        }
+        header {
+            background-color: #DC2626; /* Red theme */
+            padding: 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-logo {
+            height: 100px;
+            width: auto;
+            object-fit: contain;
+        }
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: #f8f9fa; /* Lighter grey for footer */
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+        .ios-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .ios-input, .ios-select, .ios-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .ios-input:focus, .ios-select:focus, .ios-textarea:focus {
+            border-color: #DC2626; /* Red focus */
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+        }
+        .ios-button {
+            background-color: #DC2626; /* Red button */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ios-button:hover {
+            background-color: #B91C1C; /* Darker red on hover */
+        }
+        .ios-button-secondary {
+            background-color: #6c757d;
+        }
+        .ios-button-secondary:hover {
+            background-color: #5a6268;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.5rem; /* Spacing between rows */
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        tr.table-row-item {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 8px; /* Rounded rows */
+        }
+        tr.table-row-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        td:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+        td:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+        .status-tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending {
+            background-color: #fff3cd; /* Yellowish for pending */
+            color: #856404;
+        }
+        .status-done {
+            background-color: #d4edda; /* Greenish for done */
+            color: #155724;
+        }
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            color: #6c757d;
+        }
+        .icon-button:hover {
+            color: #DC2626;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5); /* Dim background */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .ios-card {
+                padding: 1rem;
+            }
+            .ios-input, .ios-select, .ios-textarea, .ios-button {
+                font-size: 0.9rem;
+            }
+            th, td {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+             /* Stack form elements */
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Seal_of_Ko_Samui.png" alt="ตราสัญลักษณ์เทศบาลนครเกาะสมุย" class="header-logo">
+    </header>
+ <div class="text-center py-4">
+    <button class="ios-button" onclick="switchTab('formSection')">📋 ฟอร์ม</button>
+    <button class="ios-button" onclick="switchTab('statsTab')">📊 สถิติ</button>
+  </div>
+    <!-- ส่วนฟอร์ม -->
+  <div id="formSection">
+    <div class="container mx-auto p-4 md:p-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-center mb-6 text-red-700">ระบบจัดการเรื่องร้องเรียน กองช่างสุขาภิบาล</h1>
+
+        <div class="ios-card" id="formSection">
+            <h2 class="text-xl font-semibold mb-4 text-red-600">แจ้งเรื่องร้องเรียน / แก้ไขรายการ</h2>
+            <form id="complaintForm" class="space-y-4">
+                <input type="hidden" id="complaintId" name="id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 form-grid">
+                    <div>
+                        <label for="receiveDate" class="block text-sm font-medium text-gray-700 mb-1">วันที่รับเรื่อง:</label>
+                        <input type="date" id="receiveDate" name="receiveDate" class="ios-input" required>
+                    </div>
+                    <div>
+                        <label for="registrationNumber" class="block text-sm font-medium text-gray-700 mb-1">ทะเบียนเลขลงรับ:</label>
+                        <input type="text" id="registrationNumber" name="registrationNumber" class="ios-input" placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ">
+                    </div>
+                </div>
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้แจ้ง:</label>
+                    <input type="text" id="name" name="name" class="ios-input" required>
+                </div>
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่:</label>
+                    <input type="text" id="address" name="address" class="ios-input" required>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 form-grid">
+                    <div>
+                        <label for="district" class="block text-sm font-medium text-gray-700 mb-1">ตำบล:</label>
+                        <select id="district" name="district" class="ios-select" required>
+                            <option value="">เลือกตำบล</option>
+                            <option value="อ่างทอง">อ่างทอง</option>
+                            <option value="ลิปะน้อย">ลิปะน้อย</option>
+                            <option value="ตลิ่งงาม">ตลิ่งงาม</option>
+                            <option value="หน้าเมือง">หน้าเมือง</option>
+                            <option value="มะเร็ต">มะเร็ต</option>
+                            <option value="บ่อผุด">บ่อผุด</option>
+                            <option value="แม่น้ำ">แม่น้ำ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทร:</label>
+                        <input type="tel" id="phone" name="phone" class="ios-input" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 form-grid">
+                    <div>
+                        <label for="department" class="block text-sm font-medium text-gray-700 mb-1">ฝ่ายรับผิดชอบ:</label>
+                        <select id="department" name="department" class="ios-select" required>
+                            <option value="">เลือกฝ่าย</option>
+                            <option value="งานบริหารทั่วไป">งานบริหารทั่วไป</option>
+                            <option value="ฝ่ายปรับปรุงคุณภาพน้ำ">ฝ่ายปรับปรุงคุณภาพน้ำ</option>
+                            <option value="ฝ่ายจัดการสิ่งแวดล้อมด้านวัสดุใช้แล้ว">ฝ่ายจัดการสิ่งแวดล้อมด้านวัสดุใช้แล้ว</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">สถานะ:</label>
+                        <select id="status" name="status" class="ios-select" required>
+                            <option value="อยู่ระหว่างดำเนินการ">อยู่ระหว่างดำเนินการ</option>
+                            <option value="ดำเนินการแล้ว">ดำเนินการแล้ว</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="responsible" class="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ:</label>
+                    <input type="text" id="responsible" name="responsible" class="ios-input">
+                </div>
+                <div>
+                    <label for="details" class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดเรื่องร้องเรียน:</label>
+                    <textarea id="details" name="details" rows="4" class="ios-textarea" required></textarea>
+                </div>
+
+                <div id="completionFields" class="space-y-4 hidden">
+                    <div>
+                        <label for="completionDate" class="block text-sm font-medium text-gray-700 mb-1">วันที่ดำเนินการแล้วเสร็จ:</label>
+                        <input type="date" id="completionDate" name="completionDate" class="ios-input">
+                    </div>
+                    <div>
+                        <label for="completionDetails" class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดการดำเนินการแก้ไข:</label>
+                        <textarea id="completionDetails" name="completionDetails" rows="3" class="ios-textarea"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="ios-button">
+                        <i class="fas fa-save"></i> บันทึกรายการ
+                    </button>
+                    <button type="button" id="clearFormButton" class="ios-button ios-button-secondary">
+                        <i class="fas fa-times"></i> ล้างฟอร์ม
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="ios-card">
+            <h2 class="text-xl font-semibold mb-4 text-red-600">ค้นหาและกรองรายการ</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end form-grid">
+                <div>
+                    <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">ค้นหา (เลขลงรับ, ตำบล, ชื่อ, สถานะ):</label>
+                    <input type="text" id="searchInput" class="ios-input" placeholder="พิมพ์คำค้นหา...">
+                </div>
+                <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+                    <button id="searchButton" class="ios-button"><i class="fas fa-search"></i> ค้นหา</button>
+                </div>
+            </div>
+             <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">กรองตามสถานะ:</label>
+                <div class="flex flex-wrap gap-2">
+                    <button data-status-filter="ทั้งหมด" class="ios-button filter-button active bg-red-700"><i class="fas fa-list"></i> ทั้งหมด</button>
+                    <button data-status-filter="อยู่ระหว่างดำเนินการ" class="ios-button filter-button bg-gray-500"><i class="fas fa-hourglass-half"></i> อยู่ระหว่างดำเนินการ</button>
+                    <button data-status-filter="ดำเนินการแล้ว" class="ios-button filter-button bg-gray-500"><i class="fas fa-check-circle"></i> ดำเนินการแล้ว</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ios-card">
+            <h2 class="text-xl font-semibold mb-4 text-red-600">รายการเรื่องร้องเรียน</h2>
+            <div class="table-container">
+                <table id="complaintsTable">
+                    <thead>
+                        <tr>
+                            <th>วันที่รับ</th>
+                            <th>เลขลงรับ</th>
+                            <th>ชื่อผู้แจ้ง</th>
+                            <th>ตำบล</th>
+                            <th>ฝ่ายรับผิดชอบ</th>
+                            <th>สถานะ</th>
+                            <th>ผู้รับผิดชอบ</th>
+                            <th class="w-48">รายละเอียด</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="complaintsTableBody">
+                        </tbody>
+                </table>
+            </div>
+            <p id="noDataMessage" class="text-center text-gray-500 mt-4 hidden">ไม่พบข้อมูลเรื่องร้องเรียน</p>
+        </div>
+    </div>
+</div>
+    <!-- ส่วนสถิติ -->
+  <div id="statsTab" class="hidden container mx-auto p-4 md:p-6">
+    <h2 class="text-2xl md:text-3xl font-bold text-center mb-6 text-red-700">📊 สถิติการจัดการเรื่องร้องเรียน</h2>
+    <div class="ios-card grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-lg">
+      <div><div class="font-semibold text-gray-600">ทั้งหมด</div><div id="statTotal" class="text-2xl font-bold text-blue-800">-</div></div>
+      <div><div class="font-semibold text-gray-600">ดำเนินการแล้ว</div><div id="statDone" class="text-2xl font-bold text-green-600">-</div></div>
+      <div><div class="font-semibold text-gray-600">อยู่ระหว่างดำเนินการ</div><div id="statPending" class="text-2xl font-bold text-yellow-500">-</div></div>
+    </div>
+    <div class="ios-card">
+      <h3 class="text-lg font-semibold mb-2">กราฟภาพรวมรายเดือน</h3>
+      <canvas id="monthlyChart" height="300"></canvas>
+    </div>
+    <div class="ios-card">
+      <h3 class="text-lg font-semibold mb-2">กราฟแยกตามตำบล</h3>
+      <canvas id="districtChart" height="300"></canvas>
+    </div>
+    <div class="ios-card">
+      <h3 class="text-lg font-semibold mb-2">กราฟแยกตามฝ่ายงานรับผิดชอบ</h3>
+      <canvas id="departmentChart" height="300"></canvas>
+    </div>
+  </div>
+    <footer>
+        ©2025 ระบบจัดการเรื่องร้องเรียน กองช่างสุขาภิบาล โดย นายธีรศักดิ์ พูลเขาล้าน
+    </footer>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhvSkxzJDDYeFdnhiGGS-PpXI9KzrT_wzssuWwgcGNDDwXAAdxhUGCT6tlRdAzCX3Dfw/exec';
+        const complaintForm = document.getElementById('complaintForm');
+        const complaintsTableBody = document.getElementById('complaintsTableBody');
+        const complaintIdField = document.getElementById('complaintId');
+        const receiveDateField = document.getElementById('receiveDate');
+        const registrationNumberField = document.getElementById('registrationNumber');
+        const nameField = document.getElementById('name');
+        const addressField = document.getElementById('address');
+        const districtField = document.getElementById('district');
+        const phoneField = document.getElementById('phone');
+        const departmentField = document.getElementById('department');
+        const statusField = document.getElementById('status');
+        const responsibleField = document.getElementById('responsible');
+        const detailsField = document.getElementById('details');
+        const completionFields = document.getElementById('completionFields');
+        const completionDateField = document.getElementById('completionDate');
+        const completionDetailsField = document.getElementById('completionDetails');
+        const clearFormButton = document.getElementById('clearFormButton');
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const filterButtons = document.querySelectorAll('.filter-button');
+        const noDataMessage = document.getElementById('noDataMessage');
+
+        let currentEditId = null;
+        let currentFilterStatus = 'ทั้งหมด';
+        let currentSearchTerm = '';
+
+        // Set default receive date to today
+        receiveDateField.valueAsDate = new Date();
+
+        // Show/hide completion fields based on status
+        statusField.addEventListener('change', function() {
+            if (this.value === 'ดำเนินการแล้ว') {
+                completionFields.classList.remove('hidden');
+                completionDateField.required = true;
+                completionDetailsField.required = true;
+            } else {
+                completionFields.classList.add('hidden');
+                completionDateField.required = false;
+                completionDetailsField.required = false;
+                completionDateField.value = '';
+                completionDetailsField.value = '';
+            }
+        });
+
+        // JSONP request function
+        function jsonpRequest(url, callbackName, params) {
+            const script = document.createElement('script');
+            const paramString = new URLSearchParams(params).toString();
+            script.src = `${url}?callback=${callbackName}&${paramString}`;
+            document.head.appendChild(script);
+            // Clean up script tag after it's loaded
+            script.onload = () => {
+                document.head.removeChild(script);
+            };
+            script.onerror = () => {
+                document.head.removeChild(script);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+            };
+        }
+
+        // Handle form submission (Save/Update)
+        complaintForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = {
+                receiveDate: receiveDateField.value,
+                registrationNumber: registrationNumberField.value,
+                name: nameField.value,
+                address: addressField.value,
+                district: districtField.value,
+                phone: phoneField.value,
+                department: departmentField.value,
+                status: statusField.value,
+                responsible: responsibleField.value,
+                details: detailsField.value,
+                completionDate: completionDateField.value,
+                completionDetails: completionDetailsField.value
+            };
+
+            let action = 'saveComplaint';
+            if (currentEditId) {
+                formData.id = currentEditId;
+                action = 'updateComplaint';
+            }
+            formData.action = action;
+
+
+            // Define a unique callback function name for each request
+            const callbackName = 'jsonpCallback_' + Date.now();
+            window[callbackName] = function(response) {
+                if (response.success) {
+                    Swal.fire('สำเร็จ!', response.message, 'success');
+                    resetForm();
+                    loadComplaints();
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด!', response.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+                }
+                delete window[callbackName]; // Clean up the global callback function
+            };
+            jsonpRequest(APPS_SCRIPT_URL, callbackName, formData);
+        });
+
+        // Load complaints from Google Sheet
+        function loadComplaints() {
+            Swal.fire({
+                title: 'กำลังโหลดข้อมูล...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const params = {
+                action: 'getComplaints',
+                filter: JSON.stringify({
+                    status: currentFilterStatus,
+                    searchTerm: currentSearchTerm
+                })
+            };
+            const callbackName = 'jsonpLoadCallback_' + Date.now();
+            window[callbackName] = function(response) {
+                Swal.close();
+                if (response.success) {
+                    displayComplaints(response.data);
+                } else {
+                    Swal.fire('ข้อผิดพลาด', response.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+                    complaintsTableBody.innerHTML = '';
+                    noDataMessage.classList.remove('hidden');
+                }
+                delete window[callbackName];
+            };
+            jsonpRequest(APPS_SCRIPT_URL, callbackName, params);
+        }
+
+        // Display complaints in the table
+        function displayComplaints(complaints) {
+            complaintsTableBody.innerHTML = ''; // Clear existing rows
+            if (!complaints || complaints.length === 0) {
+                noDataMessage.classList.remove('hidden');
+                return;
+            }
+            noDataMessage.classList.add('hidden');
+
+            complaints.forEach(complaint => {
+                const row = document.createElement('tr');
+                row.classList.add('table-row-item');
+                row.innerHTML = `
+                    <td>${formatDate(complaint.receiveDate)}</td>
+                    <td>${complaint.registrationNumber || '-'}</td>
+                    <td>${complaint.name}</td>
+                    <td>${complaint.district}</td>
+                    <td>${complaint.department}</td>
+                    <td><span class="status-tag ${complaint.status === 'ดำเนินการแล้ว' ? 'status-done' : 'status-pending'}">${complaint.status}</span></td>
+                    <td>${complaint.responsible || '-'}</td>
+                    <td class="truncate max-w-xs" title="${complaint.details}">${complaint.details.substring(0,50)}${complaint.details.length > 50 ? '...' : ''}</td>
+                    <td>
+                        <button class="icon-button edit-button" data-id="${complaint.id}" title="แก้ไข">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="icon-button delete-button" data-id="${complaint.id}" title="ลบ">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                complaintsTableBody.appendChild(row);
+            });
+
+            // Add event listeners for new edit and delete buttons
+            document.querySelectorAll('.edit-button').forEach(button => {
+                button.addEventListener('click', handleEdit);
+            });
+            document.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', handleDelete);
+            });
+        }
+
+        // Handle edit button click
+        function handleEdit(event) {
+            const id = event.currentTarget.dataset.id;
+            currentEditId = id;
+
+            Swal.fire({
+                title: 'กำลังโหลดข้อมูลสำหรับแก้ไข...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const params = { action: 'getComplaintById', id: id };
+            const callbackName = 'jsonpEditCallback_' + Date.now();
+
+            window[callbackName] = function(response) {
+                Swal.close();
+                if (response.success && response.data) {
+                    const complaint = response.data;
+                    complaintIdField.value = complaint.id;
+                    receiveDateField.value = complaint.receiveDate ? new Date(complaint.receiveDate).toISOString().split('T')[0] : '';
+                    registrationNumberField.value = complaint.registrationNumber || '';
+                    nameField.value = complaint.name || '';
+                    addressField.value = complaint.address || '';
+                    districtField.value = complaint.district || '';
+                    phoneField.value = complaint.phone || '';
+                    departmentField.value = complaint.department || '';
+                    statusField.value = complaint.status || 'อยู่ระหว่างดำเนินการ';
+                    responsibleField.value = complaint.responsible || '';
+                    detailsField.value = complaint.details || '';
+
+                    // Trigger change on status to show/hide completion fields
+                    statusField.dispatchEvent(new Event('change'));
+
+                    if (complaint.status === 'ดำเนินการแล้ว') {
+                        completionDateField.value = complaint.completionDate ? new Date(complaint.completionDate).toISOString().split('T')[0] : '';
+                        completionDetailsField.value = complaint.completionDetails || '';
+                    }
+                    document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    Swal.fire('ข้อผิดพลาด', response.message || 'ไม่พบข้อมูลรายการนี้', 'error');
+                    currentEditId = null;
+                }
+                 delete window[callbackName];
+            };
+            jsonpRequest(APPS_SCRIPT_URL, callbackName, params);
+        }
+
+        // Handle delete button click
+        function handleDelete(event) {
+            const id = event.currentTarget.dataset.id;
+            Swal.fire({
+                title: 'ยืนยันการลบ',
+                text: "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'ใช่, ลบเลย!',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'กำลังลบข้อมูล...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                    const params = { action: 'deleteComplaint', id: id };
+                    const callbackName = 'jsonpDeleteCallback_' + Date.now();
+                    window[callbackName] = function(response) {
+                        if (response.success) {
+                            Swal.fire('ลบสำเร็จ!', response.message, 'success');
+                            loadComplaints();
+                        } else {
+                            Swal.fire('เกิดข้อผิดพลาด!', response.message || 'ไม่สามารถลบข้อมูลได้', 'error');
+                        }
+                         delete window[callbackName];
+                    };
+                    jsonpRequest(APPS_SCRIPT_URL, callbackName, params);
+                }
+            });
+        }
+
+        // Reset form
+        function resetForm() {
+            complaintForm.reset();
+            receiveDateField.valueAsDate = new Date(); // Reset date to today
+            complaintIdField.value = '';
+            currentEditId = null;
+            statusField.value = 'อยู่ระหว่างดำเนินการ'; // Default status
+            completionFields.classList.add('hidden');
+            completionDateField.required = false;
+            completionDetailsField.required = false;
+        }
+        clearFormButton.addEventListener('click', resetForm);
+
+        // Search functionality
+        searchButton.addEventListener('click', () => {
+            currentSearchTerm = searchInput.value.trim();
+            loadComplaints();
+        });
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                currentSearchTerm = searchInput.value.trim();
+                loadComplaints();
+            }
+        });
+
+
+        // Filter functionality
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('bg-red-700', 'active');
+                    btn.classList.add('bg-gray-500');
+                });
+                this.classList.add('bg-red-700', 'active');
+                this.classList.remove('bg-gray-500');
+                currentFilterStatus = this.dataset.statusFilter;
+                loadComplaints();
+            });
+        });
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                // Try to parse if it's already in dd/mm/yyyy or similar from Sheets
+                const parts = dateString.split('/');
+                if (parts.length === 3) {
+                    // Assuming dd/mm/yyyy
+                    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+                }
+                return dateString; // Return original if cannot parse
+            }
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Initial load of complaints
+        document.addEventListener('DOMContentLoaded', loadComplaints);
+function switchTab(tabId) {
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('statsTab').classList.add('hidden');
+      document.getElementById(tabId).classList.remove('hidden');
+      if (tabId === 'statsTab') loadStatistics();
+    }
+
+    function loadStatistics() {
+      const callback = 'statsCallback_' + Date.now();
+      window[callback] = function(response) {
+        if (!response.success) {
+          Swal.fire("ผิดพลาด", response.message || "ไม่สามารถโหลดข้อมูลสถิติได้", "error");
+          return;
+        }
+        const { summary, monthlyStats, byDistrict, byDepartment } = response;
+        document.getElementById("statTotal").textContent = summary.total;
+        document.getElementById("statDone").textContent = summary.done;
+        document.getElementById("statPending").textContent = summary.pending;
+
+        new Chart(document.getElementById("monthlyChart"), {
+          type: 'bar',
+          data: {
+            labels: monthlyStats.map(m => m.label),
+            datasets: [
+              { label: "ดำเนินการแล้ว", backgroundColor: "#16a34a", data: monthlyStats.map(m => m.done) },
+              { label: "อยู่ระหว่างดำเนินการ", backgroundColor: "#facc15", data: monthlyStats.map(m => m.pending) }
+            ]
+          },
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+
+        new Chart(document.getElementById("districtChart"), {
+          type: 'pie',
+          data: {
+            labels: Object.keys(byDistrict),
+            datasets: [{
+              label: "จำนวนเรื่อง",
+              backgroundColor: Object.keys(byDistrict).map((_, i) => `hsl(${i * 50}, 70%, 60%)`),
+              data: Object.values(byDistrict),
+            }]
+          },
+          options: { responsive: true }
+        });
+
+        new Chart(document.getElementById("departmentChart"), {
+          type: 'pie',
+          data: {
+            labels: Object.keys(byDepartment),
+            datasets: [{
+              label: "จำนวนเรื่อง",
+              backgroundColor: Object.keys(byDepartment).map((_, i) => `hsl(${i * 60}, 60%, 65%)`),
+              data: Object.values(byDepartment),
+            }]
+          },
+          options: { responsive: true }
+        });
+
+        delete window[callback];
+      };
+      const script = document.createElement("script");
+      script.src = `https://script.google.com/macros/s/AKfycbzhvSkxzJDDYeFdnhiGGS-PpXI9KzrT_wzssuWwgcGNDDwXAAdxhUGCT6tlRdAzCX3Dfw/exec?action=getStatistics&callback=${callback}`;
+      document.head.appendChild(script);
+    }
+    </script>
+</body>
+</html>
